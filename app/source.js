@@ -242,6 +242,39 @@ window.Source = function(templates, cwd, tm, source, revlayers, examples, isMapb
         $('#full').addClass('loading');
         var filepath = filepath || $('#addlayer input[name=Datasource-file]').val();
         var extension = filepath.split('.').pop().toLowerCase();
+
+        // mapinfo support
+        if (extension.match(/mid|mif|tab/i)) {
+            $.ajax({
+                url: 'http://ogre.mystand.ru/?input=' + filepath + '&output=' + filepath + '.geojson',
+                success: function (data) {
+                    next(data.output)
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    $('#full').removeClass('loading');
+                    Modal.show('error', jqXHR.responseText);
+                }
+            });
+        }
+
+        var next = function(filepath) {
+            $.ajax({
+                url: '/metadata?file=' + filepath,
+                success: function(metadata) {
+                    // Clear loading state
+                    $('#full').removeClass('loading');
+                    window.editor.addlayer(extension, filepath, metadata);
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    // Clear loading state
+                    $('#full').removeClass('loading');
+                    Modal.show('error', jqXHR.responseText);
+                }
+            });
+        }
+        // mapinfo support
+
+        /*
         $.ajax({
             url: '/metadata?file=' + filepath,
             success: function(metadata) {
@@ -255,6 +288,7 @@ window.Source = function(templates, cwd, tm, source, revlayers, examples, isMapb
                 Modal.show('error', jqXHR.responseText);
             }
         });
+        */
         return false;
     };
     Editor.prototype.updatenameModal = function(ev) {
